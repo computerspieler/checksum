@@ -11,9 +11,9 @@ int main(int argc, char* argv[])
     char* output_hash;
     Hash_Algorithm* algorithm;
 
-    if(argc != 3)
+    if(argc < 2)
     {
-        printf("Checksum <hash function> <filename>\n");
+        printf("Checksum <hash function> [file1 file2 ...]\n");
         return -1;
     }
 
@@ -33,19 +33,34 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    file = fopen(argv[2], "r");
-    if(!file)
-    {
-        perror("fopen");
-        return -3;
-    }
+	for(i = 2; i < argc; i ++) {
+		file = fopen(argv[i], "r");
+		if(!file) {
+			perror("fopen");
+			return -3;
+		}
 
-    output_hash = algorithm->handler(file);
-    if(!output_hash)
-		printf("Unable to hash the file using %s\n", algorithm->name);
-	else
-		printf("%s hash: %s\n", algorithm->name, output_hash);
+		output_hash = algorithm->handler(file);
+		if(!output_hash)
+			printf("Unable to hash \"%s\" using %s\n", argv[i], algorithm->name);
+		else {
+			printf("%s  %s\n", output_hash, argv[i]);
+			free(output_hash);
+		}
+    	
+		fclose(file);
+	}
 
-    fclose(file);
+	if(argc == 2) {
+		file = stdin;
+		output_hash = algorithm->handler(file);
+		if(!output_hash)
+			printf("Unable to hash stdin using %s\n", algorithm->name);
+		else {
+			printf("%s  stdin\n", output_hash);
+			free(output_hash);
+		}
+	}
+
     return 0;
 }

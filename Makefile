@@ -4,10 +4,8 @@ OBJS=$(patsubst src/%,bin/objs/%.o,$(SRCS))
 
 CC=gcc
 LD=gcc
-CCFLAGS=-Wall -Wextra -g -ggdb -Isrc -c \
-	-Wno-incompatible-pointer-types -Wno-sign-compare \
-	-fopenmp
-LDFLAGS=-g -ggdb -lm -fsanitize=address -fopenmp
+CCFLAGS=-Wall -Wextra -g -ggdb -Isrc -c
+LDFLAGS=-g -ggdb
 
 all: bin/debug
 
