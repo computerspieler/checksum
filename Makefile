@@ -1,54 +1,29 @@
+SRCS=$(wildcard src/*.c)
+DEPS=$(patsubst src/%,bin/deps/%.d,$(SRCS))
+OBJS=$(patsubst src/%,bin/objs/%.o,$(SRCS))
+
 CC=gcc
-CCFLAGS=-c -Wall -Wextra -Isrc
-
 LD=gcc
-LDFLAGS=
+CCFLAGS=-Wall -Wextra -g -ggdb -Isrc -c \
+	-Wno-incompatible-pointer-types -Wno-sign-compare \
+	-fopenmp
+LDFLAGS=-g -ggdb -lm -fsanitize=address -fopenmp
 
-DEL=@rm
-DELFLAGS=-frdv
-
-MKDIR=mkdir
-MKDIRFLAGS=-p
-
-DBG=gdb
-DBGFLAGS=--args
-
-OBJ=main.o md5.o
-
-DEBUGOBJ=$(patsubst %.o,bin/debug/%.o,$(OBJ))
-RELEASEOBJ=$(patsubst %.o,bin/release/%.o,$(OBJ))
-
-.PHONY: all clear debug release run
-
-all:
-	@echo "You need to add one of the following target :) : debug / release / clean / debug-run / release-run"
-
-
-debug-run: debug
-	$(DBG) $(DBGFLAGS) ./$< md5 test.txt
-
-release-run: release
-	./$<
+all: bin/debug
 
 clean:
-	$(DEL) $(DELFLAGS) bin
-	$(DEL) $(DELFLAGS) release
-	$(DEL) $(DELFLAGS) debug
+	rm -rf bin
 
-release: bin $(RELEASEOBJ)
-	$(LD) $(LDFLAGS) -O2 -o $@ $(RELEASEOBJ)
+-include $(DEPS)
 
-debug: bin $(DEBUGOBJ)
-	$(LD) $(LDFLAGS) -g -o $@ $(DEBUGOBJ)
+bin/debug: $(OBJS)
+	$(LD) -o $@ $^ $(LDFLAGS)
 
+bin/objs/%.c.o: src/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CCFLAGS) -o $@ $<
 
-bin:
-	$(MKDIR) $(MKDIRFLAGS) bin/
-	$(MKDIR) $(MKDIRFLAGS) bin/debug
-	$(MKDIR) $(MKDIRFLAGS) bin/release
+bin/deps/%.c.d: src/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CCFLAGS) -M -o $@ $< -MT $(patsubst bin/deps/%,bin/objs/%,$@)
 
-bin/debug/%.o: src/%.c src/*.h
-	$(CC) $(CCFLAGS) -g -o $@ $<
-
-bin/release/%.o: src/%.c src/*.h
-	$(CC) $(CCFLAGS) -O2 -o $@ $<
